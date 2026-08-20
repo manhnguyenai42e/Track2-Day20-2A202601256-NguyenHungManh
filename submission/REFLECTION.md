@@ -43,13 +43,15 @@ hẳn sang `LAB_SERVER_PORT=8090` cho toàn bộ track 02/03.
 
 | Quantization | Size (GB) | Load (ms) | TTFT P50/P95 (ms) | TPOT P50/P95 (ms) | E2E P50/P95/P99 (ms) | Decode (tok/s) |
 |---|--:|--:|--:|--:|--:|--:|
-| UD-Q4_K_XL | 2.97 | 6762 | 436 / 2022 | 16.2 / 22.1 | 1548 / 3109 / 3109 | 61.7 |
-| UD-Q2_K_XL | 2.24 | 4925 | 1046 / 1579 | 14.3 / 15.6 | 1940 / 2528 / 2528 | 69.7 |
+| UD-Q4_K_XL | 2.97 | 4065 | 234 / 369 | 13.3 / 13.7 | 1060 / 1203 / 1203 | 75.3 |
+| UD-Q2_K_XL | 2.24 | 4362 | 234 / 378 | 12.7 / 13.0 | 1037 / 1175 / 1175 | 78.8 |
 
-**Quan sát** (≤ 60 chữ): Q2_K_XL decode nhanh hơn 1.13x, nhẹ hơn 0.73GB, nhưng **không
+**Quan sát** (≤ 60 chữ): Q2_K_XL decode nhanh hơn 1.05x, nhẹ hơn 0.73GB, nhưng **không
 đáng dùng**: hỏi cùng câu "Explain what a KV cache is" trên cả hai, Q4 trả lời đúng
 (cache key/value vectors lúc inference), còn Q2 trả lời **sai kỹ thuật** (nói là cache
 "weights" dùng lúc "training"). Tốc độ nhanh hơn không bù được câu trả lời sai.
+(Bảng này lấy từ lần chạy lại `make bench` sau khi máy đã "ấm" — số liệu ban đầu chậm
+hơn do cold cache; kết luận chất lượng không đổi.)
 
 ---
 
@@ -59,24 +61,26 @@ hẳn sang `LAB_SERVER_PORT=8090` cho toàn bộ track 02/03.
 
 | Users | RPS | P50 (ms) | P95 (ms) | P99 (ms) | Eff. concurrency | Failures |
 |--:|--:|--:|--:|--:|--:|--:|
-| 10 | 1.46 | 5600 | 8100 | 10000 | 8.4 | 0.0% |
-| 50 | 1.38 | 29000 | 36000 | 38000 | 34.5 | 0.0% |
+| 10 | 2.29 | 3300 | 5800 | 6900 | 7.9 | 0.0% |
+| 50 | 2.60 | 17000 | 19000 | 20000 | 39.7 | 0.0% |
 
-- **Offered load tăng 5×, throughput thực tăng:** 0.94×  (tức là *giảm nhẹ*, không tăng)
-- **P95 tăng:** 4.44×
-- **Effective concurrency ở 50 users:** 34.5 so với `--parallel` = 4 slots
+- **Offered load tăng 5×, throughput thực tăng:** 1.14×  (gần như không đổi so với 5× tải)
+- **P95 tăng:** 3.28×
+- **Effective concurrency ở 50 users:** 39.7 so với `--parallel` = 4 slots
 
 **Peak `llamacpp:n_busy_slots_per_decode`** (từ `make metrics` khi `make load-50` đang
 chạy): 3.97 / 4 slots
 
 **Saturation reading** (≤ 80 chữ): Server bão hoà ở hoặc dưới 50 users. Ba con số
-đồng thuận: RPS gần như không đổi (1.46→1.38), `n_busy_slots_per_decode` ghim ở
-3.97/4 gần suốt 60s, và `requests_deferred` ~44 liên tục. P95 tăng 4.44× trong khi
-throughput không đổi → phần latency thêm là **queue time**, không phải compute time.
-Muốn tăng goodput@SLO, tôi sẽ đổi `--parallel` 4→8 **trước tiên** (không phải
+đồng thuận: RPS gần như không đổi (2.29→2.60 cho 5× tải), `n_busy_slots_per_decode`
+ghim ở 3.97/4 gần suốt 60s, và `requests_deferred` ~44 liên tục. P95 tăng 3.28× trong
+khi throughput không đổi → phần latency thêm là **queue time**, không phải compute
+time. Muốn tăng goodput@SLO, tôi sẽ đổi `--parallel` 4→8 **trước tiên** (không phải
 quantization hay threads), vì bottleneck là số slot chứ không phải tốc độ decode mỗi
-request (GPU đã nhanh, 68.8 tok/s ở `ngl=99`) — còn VRAM (2.97GB model / 6GB card)
-vẫn còn dư để thử.
+request (GPU đã nhanh) — còn VRAM (~3GB model / 6GB card) vẫn còn dư để thử.
+(Bảng này lấy từ lần `load-10`/`load-50` chạy lại để chụp ảnh cuối cùng; con số đổi
+theo từng lần chạy nhưng câu chuyện bão hoà giữ nguyên — xem ghi chú trong
+`benchmarks/02-server-batching-u50.md`.)
 
 ---
 
