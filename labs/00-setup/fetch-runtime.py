@@ -78,7 +78,8 @@ def driver_cuda_version() -> tuple[int, int] | None:
         return None
     try:
         out = subprocess.run(
-            ["nvidia-smi"], capture_output=True, text=True, timeout=10, check=False
+            ["nvidia-smi"], capture_output=True, text=True, encoding="utf-8",
+            errors="replace", timeout=10, check=False
         ).stdout
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -285,7 +286,8 @@ def main() -> int:
     print(f"\n==> llama-server : {server.relative_to(labkit.repo_root())}")
     if bench:
         print(f"==> llama-bench  : {bench.relative_to(labkit.repo_root())}")
-    rc = subprocess.run([str(server), "--version"], capture_output=True, text=True, check=False)
+    rc = subprocess.run([str(server), "--version"], capture_output=True, text=True,
+                        encoding="utf-8", errors="replace", check=False)
     version = (rc.stdout + rc.stderr).strip().splitlines()
     for line in version[:3]:
         print(f"    {line}")
@@ -294,7 +296,8 @@ def main() -> int:
         json.dumps({"build": BUILD, "asset": asset,
                     "llama_server": str(server.relative_to(labkit.repo_root())),
                     "llama_bench": str(bench.relative_to(labkit.repo_root())) if bench else None},
-                   indent=2)
+                   indent=2),
+        encoding="utf-8"
     )
     print("\n==> Runtime ready. No compiler required.")
     return 0

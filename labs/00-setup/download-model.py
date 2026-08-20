@@ -135,7 +135,7 @@ def main() -> int:
         "mlx_repo": spec["mlx_repo"],
     }
     labkit.active_json().parent.mkdir(exist_ok=True)
-    labkit.active_json().write_text(json.dumps(manifest, indent=2))
+    labkit.active_json().write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     total_gb = sum(p.stat().st_size for p in resolved.values()) / 1024**3
     print(f"\n==> Wrote models/active.json  ({total_gb:.1f} GB on disk)")

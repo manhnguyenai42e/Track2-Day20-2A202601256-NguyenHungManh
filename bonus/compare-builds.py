@@ -41,13 +41,15 @@ def run(bench: pathlib.Path, model: str, threads: int, ngl: int, metric: str, re
     shape = ["-p", metric[2:], "-n", "0"] if is_prefill else ["-p", "0", "-n", "128"]
     proc = subprocess.run(
         [str(bench), "-m", model, "-t", str(threads), "-ngl", str(ngl), *shape, "-r", str(reps)],
-        capture_output=True, text=True, check=False, timeout=1800,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        check=False, timeout=1800,
     )
     return labkit.bench_metric(proc.stdout + proc.stderr, metric)
 
 
 def version_of(binary: pathlib.Path) -> str:
-    proc = subprocess.run([str(binary), "--version"], capture_output=True, text=True, check=False)
+    proc = subprocess.run([str(binary), "--version"], capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", check=False)
     text = (proc.stdout + proc.stderr).strip().splitlines()
     return text[0] if text else "unknown"
 

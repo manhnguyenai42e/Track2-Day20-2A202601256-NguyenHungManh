@@ -20,7 +20,8 @@ import labkit  # noqa: E402
 
 def run(cmd: list[str], timeout: int = 5) -> tuple[int, str]:
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=timeout, check=False)
         return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return 127, ""
@@ -269,7 +270,7 @@ def main() -> int:
         },
         "recommendation": rec,
     }
-    labkit.hardware_json().write_text(json.dumps(out, indent=2))
+    labkit.hardware_json().write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(f"\nSaved {labkit.hardware_json().name} -- every other track reads this.")
     return 0
 

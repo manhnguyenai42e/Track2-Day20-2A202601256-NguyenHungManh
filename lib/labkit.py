@@ -253,7 +253,8 @@ def visible_devices(binary: Path | None = None) -> list[str]:
     devices: list[str] = []
     try:
         out = subprocess.run([str(exe), "--list-devices"], capture_output=True,
-                             text=True, check=False, timeout=60)
+                             text=True, encoding="utf-8", errors="replace",
+                             check=False, timeout=60)
         seen_header = False
         for line in (out.stdout + out.stderr).splitlines():
             if line.strip().startswith("Available devices:"):
@@ -501,7 +502,8 @@ def bench_all_pp(output: str) -> list[tuple[int, float]]:
 def run_bench(args: list[str], timeout: int = 1800) -> str:
     bin_path = runtime_bin("llama-bench")
     proc = subprocess.run(
-        [str(bin_path)] + args, capture_output=True, text=True, check=False, timeout=timeout
+        [str(bin_path)] + args, capture_output=True, text=True, encoding="utf-8",
+        errors="replace", check=False, timeout=timeout
     )
     return proc.stdout + proc.stderr
 
@@ -510,9 +512,9 @@ def run_bench(args: list[str], timeout: int = 1800) -> str:
 
 def write_report(filename: str, markdown: str, data: object | None = None) -> Path:
     out = bench_dir() / filename
-    out.write_text(markdown)
+    out.write_text(markdown, encoding="utf-8")
     if data is not None:
-        out.with_suffix(".json").write_text(json.dumps(data, indent=2))
+        out.with_suffix(".json").write_text(json.dumps(data, indent=2), encoding="utf-8")
     return out
 
 
